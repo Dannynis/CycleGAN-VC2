@@ -11,8 +11,22 @@ from model import CycleGAN
 from data_save import world_encode_data_toLoad, world_encode_data_toSave
 
 
+processed_data_dir = './processed_data'
+
+
+def load_speaker_features(file_path):
+
+    mcep_params = np.load(file_path, allow_pickle=True)
+    f0s = mcep_params['f0s']
+    timeaxes = mcep_params['timeaxes']
+    sps = mcep_params['sps']
+    aps = mcep_params['aps']
+    coded_sps = mcep_params['coded_sps']
+    return f0s,timeaxes,sps,aps,coded_sps
+
+
 def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validation_A_dir, validation_B_dir, output_dir,
-          tensorboard_log_dir, gen_model, MCEPs_dim, hdf5_path, lambda_list):
+          tensorboard_log_dir, gen_model, MCEPs_dim, lambda_list):
 
     gen_loss_thres = 100.0
     np.random.seed(random_seed)
@@ -22,45 +36,38 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     generator_learning_rate_decay = generator_learning_rate / 200000
     discriminator_learning_rate = 0.0001
     discriminator_learning_rate_decay = discriminator_learning_rate / 200000
-    sampling_rate = 16000
+    sampling_rate = 44000
     num_mcep = MCEPs_dim
     frame_period = 5.0
     n_frames = 128
     lambda_cycle = lambda_list[0]
     lambda_identity = lambda_list[1]
 
-    # ---------------------------------------------- Data preprocessing ---------------------------------------------- #
-    print('Preprocessing Data...')
+    Speaker_A_features = os.path.join(processed_data_dir, 'wav_A.npz')
+    Speaker_B_features = os.path.join(processed_data_dir, 'wav_B.npz')
     start_time = time.time()
+    if os.path.exists(Speaker_A_features) and os.path.exists(Speaker_B_features):
+        print ('#### loading processed data #######')
+        f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = load_speaker_features(Speaker_A_features)
+        f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = load_speaker_features(Speaker_B_features)
+    else:
+        print('Preprocessing Data...')
 
-    # Data load using HDF5, world vocoder has extra high complexity.(e.g., 1 song -> 5 min)
-    if hdf5_path[0] is None:
         wavs_A = load_wavs(wav_dir=train_A_dir, sr=sampling_rate)
         wavs_B = load_wavs(wav_dir=train_B_dir, sr=sampling_rate)
+
         f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = world_encode_data(wavs=wavs_A, fs=sampling_rate,
                                                                          frame_period=frame_period, coded_dim=num_mcep)
         f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = world_encode_data(wavs=wavs_B, fs=sampling_rate,
                                                                          frame_period=frame_period, coded_dim=num_mcep)
-    else:
-        if not os.path.exists(hdf5_path[0]):
-            os.makedirs(hdf5_path[0])
-            os.makedirs(hdf5_path[1])
-            f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = world_encode_data_toSave(num_mcep, hdf5_dir=hdf5_path[0],
-                                                                                                     wav_dir=train_A_dir,
-                                                                                                     sr=sampling_rate,
-                                                                                                     frame_period=5.0,
-                                                                                                     coded_dim24=24,
-                                                                                                     coded_dim36=36)
-            f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = world_encode_data_toSave(num_mcep, hdf5_dir=hdf5_path[1],
-                                                                                                     wav_dir=train_B_dir,
-                                                                                                     sr=sampling_rate,
-                                                                                                     frame_period=5.0,
-                                                                                                     coded_dim24=24,
-                                                                                                     coded_dim36=36)
-        else:
-            f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = world_encode_data_toLoad(num_mcep, hdf5_dir=hdf5_path[0])
-            f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = world_encode_data_toLoad(num_mcep, hdf5_dir=hdf5_path[1])
+        if not os.path.exists(processed_data_dir):
+            os.makedirs(processed_data_dir)
 
+        np.savez(Speaker_A_features, f0s=f0s_A, timeaxes=timeaxes_A, sps=sps_A, aps=aps_A, coded_sps=coded_sps_A)
+        np.savez(Speaker_B_features, f0s=f0s_B, timeaxes=timeaxes_B, sps=sps_B, aps=aps_B, coded_sps=coded_sps_B)
+
+        print('Data preprocessing finished !')
+        return
 
     log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
     log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
@@ -212,8 +219,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='Train CycleGAN-VC2 model')
 
-    train_A_dir_default = '/root/onejin/train/ma'
-    train_B_dir_default = '/root/onejin/train/fe'
+    train_A_dir_default = '/media/dan/Disk/ml+dl+dsp/Pytorch-CycleGAN-VC2/train_44k/podcast'
+    train_B_dir_default = '/media/dan/Disk/ml+dl+dsp/Pytorch-CycleGAN-VC2/train_44k/nas'
     model_dir_default = './model/sf1_tf2'
     model_name_default = 'sf1_tf2.ckpt'
     random_seed_default = 0
@@ -223,8 +230,6 @@ if __name__ == '__main__':
     tensorboard_log_dir_default = './log'
     generator_model_default = 'CycleGAN-VC2'
     MCEPs_dim_default = 32
-    hdf5A_path_defalut = None
-    hdf5B_path_defalut = None
     lambda_cycle_defalut = 10.0
     lambda_identity_defalut = 5.0
 
@@ -244,8 +249,6 @@ if __name__ == '__main__':
     parser.add_argument('--tensorboard_log_dir', type = str, help = 'TensorBoard log directory.', default = tensorboard_log_dir_default)
     parser.add_argument('--gen_model', type=str, help='generator_gatedcnn / generator_gatedcnn_SAGAN', default=generator_model_default)
     parser.add_argument('--MCEPs_dim', type=int, help='input dimension', default=MCEPs_dim_default)
-    parser.add_argument('--hdf5A_path', type=str, help='hdf5 A domain folder', default=hdf5A_path_defalut)
-    parser.add_argument('--hdf5B_path', type=str, help='hdf5 B domain folder', default=hdf5B_path_defalut)
     parser.add_argument('--lambda_cycle', type=float, help='lambda cycle', default=lambda_cycle_defalut)
     parser.add_argument('--lambda_identity', type=float, help='lambda identity', default=lambda_identity_defalut)
 
@@ -262,13 +265,10 @@ if __name__ == '__main__':
     tensorboard_log_dir = argv.tensorboard_log_dir
     generator_model = argv.gen_model
     MCEPs_dim = argv.MCEPs_dim
-    hdf5A_path = argv.hdf5A_path
-    hdf5B_path = argv.hdf5B_path
     lambda_cycle = argv.lambda_cycle
     lambda_identity = argv.lambda_identity
 
     train(train_A_dir=train_A_dir, train_B_dir=train_B_dir, model_dir=model_dir, model_name=model_name,
           random_seed=random_seed, validation_A_dir=validation_A_dir, validation_B_dir=validation_B_dir,
           output_dir=output_dir, tensorboard_log_dir=tensorboard_log_dir, gen_model=generator_model,
-          MCEPs_dim=MCEPs_dim,
-          hdf5_path=[hdf5A_path, hdf5B_path], lambda_list=[lambda_cycle, lambda_identity])
+          MCEPs_dim=MCEPs_dim, lambda_list=[lambda_cycle, lambda_identity])

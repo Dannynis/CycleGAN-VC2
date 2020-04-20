@@ -22,9 +22,9 @@ def world_encode_data_toSave_spec(num_mcep, hdf5_dir, wav_dir, sr, frame_period=
 
     def calc_spec_wav(wav, f0):
 
-        sr = 16000
+        sr = 44000
         duration = 0.005
-        hop_size = int(sr * duration) # 16000 * 0.005 = 80 sample
+        hop_size = int(sr * duration) # 44000 * 0.005 = 80 sample
         spectrograms = list()
 
         for i in range(wav.shape[0] // (hop_size) + 1):
@@ -32,7 +32,7 @@ def world_encode_data_toSave_spec(num_mcep, hdf5_dir, wav_dir, sr, frame_period=
             if f0[i] == 0:
                 segment_wav = wav[start : start+1024]
             else:
-                segment_wav = wav[start : start+int(3 * 1 / f0[i] * 16000)]
+                segment_wav = wav[start : start+int(3 * 1 / f0[i] * 44000)]
             fft_size = 1024
             # D = np.abs(librosa.stft(segment_wav, n_fft=fft_size, hop_length=segment_wav.shape[0]*2))
             if segment_wav.shape[0] == 0:
@@ -238,15 +238,15 @@ if __name__ == '__main__':
     wav_file = argv.wav_file
     hdf_file = argv.hdf_file
 
-    sr = 16000
+    sr = 44000
     wav, _ = librosa.load(wav_file, sr=sr, mono=True)
 
     f0, timeaxis, sp, ap = world_decompose(wav=wav, fs=sr, frame_period=5.0)
     def calc_spec_wav(wav, f0):
 
-        sr = 16000
+        sr = 44000
         duration = 0.005
-        hop_size = int(sr * duration) # 16000 * 0.005 = 80 sample
+        hop_size = int(sr * duration) # 44000 * 0.005 = 80 sample
         spectrograms = list()
 
         for i in range(wav.shape[0] // (hop_size) + 1):
@@ -254,7 +254,7 @@ if __name__ == '__main__':
             if f0[i] == 0:
                 segment_wav = wav[start : start+1024]
             else:
-                segment_wav = wav[start : start+int(3 * 1 / f0[i] * 16000)]
+                segment_wav = wav[start : start+int(3 * 1 / f0[i] * 44000)]
             fft_size = 1024
             # D = np.abs(librosa.stft(segment_wav, n_fft=fft_size, hop_length=segment_wav.shape[0]*2))
             if segment_wav.shape[0] == 0:

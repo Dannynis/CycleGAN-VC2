@@ -8,7 +8,7 @@ from preprocess import *
 def conversion(model_dir, model_name, data_dir, conversion_direction, output_dir, pc, generation_model):
 
     num_features = 32
-    sampling_rate = 16000
+    sampling_rate = 44000
     frame_period = 5.0
 
     model = CycleGAN(num_features = num_features, mode = 'test', gen_model=generation_model)
