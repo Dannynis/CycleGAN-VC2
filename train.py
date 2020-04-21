@@ -5,6 +5,7 @@ import numpy as np
 import argparse
 import time
 import librosa
+import tqdm 
 
 from preprocess import *
 from model import CycleGAN
@@ -49,7 +50,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     mini_batch_size = 1
     generator_learning_rate = 0.0002
     generator_learning_rate_decay = generator_learning_rate / 200000
-    discriminator_learning_rate = 0.00001
+    discriminator_learning_rate = 0.0001
     discriminator_learning_rate_decay = discriminator_learning_rate / 200000
     sampling_rate = 44000
     num_mcep = MCEPs_dim
@@ -149,7 +150,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 
         n_samples = dataset_A.shape[0]
         # -------------------------------------------- one epoch learning -------------------------------------------- #
-        for i in range(n_samples // mini_batch_size):
+        for i in tqdm.tqdm(range(n_samples // mini_batch_size)):
 
             num_iterations = n_samples // mini_batch_size * epoch + i
 
