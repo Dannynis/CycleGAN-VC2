@@ -11,8 +11,23 @@ from model import CycleGAN
 from data_save import world_encode_data_toLoad, world_encode_data_toSave
 
 
-processed_data_dir = './processed_data'
-
+def remove_radical_pitch_samples(f0s,mceps,log_f0s_mean,log_f0s_std):
+    print ("running radical pitch clearing on {} mceps".format(len(mceps)))
+    filtered_mceps = []
+    filtered_out_count = 0
+    total_count = 0
+    for i,(f0,mcep) in enumerate(zip(f0s,mceps)):
+        try:
+            mask = ((np.ma.log(f0) - log_f0s_mean) ** 2 < log_f0s_std * 2).data
+            filtered_mceps.append(mcep[mask])
+            filtered_out_count += len(mcep)- np.sum(mask)
+            total_count += len(mcep)
+        except:
+            print (f0.shape)
+            print (traceback.format_exc())
+            print (i)
+    print ("filtered {} out of {}".format(filtered_out_count,total_count))
+    return filtered_mceps
 
 def load_speaker_features(file_path):
 
@@ -26,7 +41,7 @@ def load_speaker_features(file_path):
 
 
 def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validation_A_dir, validation_B_dir, output_dir,
-          tensorboard_log_dir, gen_model, MCEPs_dim, lambda_list):
+          tensorboard_log_dir, gen_model, MCEPs_dim, lambda_list,processed_data_dir):
 
     gen_loss_thres = 100.0
     np.random.seed(random_seed)
@@ -77,9 +92,13 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     print('Log Pitch B')
     print('Mean: %f, Std: %f' %(log_f0s_mean_B, log_f0s_std_B))
 
+    coded_sps_A = remove_radical_pitch_samples(f0s_A, coded_sps_A, log_f0s_mean_A, log_f0s_std_A)
+    coded_sps_B = remove_radical_pitch_samples(f0s_B, coded_sps_B, log_f0s_mean_B, log_f0s_std_B)
+
 
     coded_sps_A_transposed = transpose_in_list(lst = coded_sps_A)
     coded_sps_B_transposed = transpose_in_list(lst = coded_sps_B)
+
 
 
     print("Input data fixed.")
@@ -232,7 +251,7 @@ if __name__ == '__main__':
     MCEPs_dim_default = 32
     lambda_cycle_defalut = 10.0
     lambda_identity_defalut = 5.0
-
+    processed_data_dir = './processed_data'
 
     parser.add_argument('--train_A_dir', type = str, help = 'Directory for A.', default = train_A_dir_default)
     parser.add_argument('--train_B_dir', type = str, help = 'Directory for B.', default = train_B_dir_default)
@@ -251,6 +270,7 @@ if __name__ == '__main__':
     parser.add_argument('--MCEPs_dim', type=int, help='input dimension', default=MCEPs_dim_default)
     parser.add_argument('--lambda_cycle', type=float, help='lambda cycle', default=lambda_cycle_defalut)
     parser.add_argument('--lambda_identity', type=float, help='lambda identity', default=lambda_identity_defalut)
+    parser.add_argument('--processed_data_dir', type=float, help='processed_data_dir', default=processed_data_dir)
 
     argv = parser.parse_args()
 
@@ -271,4 +291,4 @@ if __name__ == '__main__':
     train(train_A_dir=train_A_dir, train_B_dir=train_B_dir, model_dir=model_dir, model_name=model_name,
           random_seed=random_seed, validation_A_dir=validation_A_dir, validation_B_dir=validation_B_dir,
           output_dir=output_dir, tensorboard_log_dir=tensorboard_log_dir, gen_model=generator_model,
-          MCEPs_dim=MCEPs_dim, lambda_list=[lambda_cycle, lambda_identity])
+          MCEPs_dim=MCEPs_dim, lambda_list=[lambda_cycle, lambda_identity],processed_data_dir=processed_data_dir)
