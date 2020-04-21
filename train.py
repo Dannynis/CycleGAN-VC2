@@ -49,7 +49,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     mini_batch_size = 1
     generator_learning_rate = 0.0002
     generator_learning_rate_decay = generator_learning_rate / 200000
-    discriminator_learning_rate = 0.0001
+    discriminator_learning_rate = 0.00001
     discriminator_learning_rate_decay = discriminator_learning_rate / 200000
     sampling_rate = 44000
     num_mcep = MCEPs_dim
@@ -61,6 +61,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     Speaker_A_features = os.path.join(processed_data_dir, 'wav_A.npz')
     Speaker_B_features = os.path.join(processed_data_dir, 'wav_B.npz')
     start_time = time.time()
+    print ('lookiong for preprocessed data in:{}'.format(processed_data_dir))
     if os.path.exists(Speaker_A_features) and os.path.exists(Speaker_B_features):
         print ('#### loading processed data #######')
         f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = load_speaker_features(Speaker_A_features)
@@ -189,7 +190,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
         # ------------------------------------------- validation inference ------------------------------------------- #
         if validation_A_dir is not None:
             # if epoch % 50 == 0:
-            if epoch % 1000 == 0:
+            if epoch % 10 == 0:
                 print('Generating Validation Data B from A...')
                 for file in os.listdir(validation_A_dir):
                     filepath = os.path.join(validation_A_dir, file)
@@ -211,7 +212,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 
         if validation_B_dir is not None:
             # if epoch % 50 == 0:
-            if epoch % 1000 == 0:
+            if epoch % 10 == 0:
                 print('Generating Validation Data A from B...')
                 for file in os.listdir(validation_B_dir):
                     filepath = os.path.join(validation_B_dir, file)
@@ -270,7 +271,7 @@ if __name__ == '__main__':
     parser.add_argument('--MCEPs_dim', type=int, help='input dimension', default=MCEPs_dim_default)
     parser.add_argument('--lambda_cycle', type=float, help='lambda cycle', default=lambda_cycle_defalut)
     parser.add_argument('--lambda_identity', type=float, help='lambda identity', default=lambda_identity_defalut)
-    parser.add_argument('--processed_data_dir', type=float, help='processed_data_dir', default=processed_data_dir)
+    parser.add_argument('--processed_data_dir', type=str, help='processed_data_dir', default=processed_data_dir)
 
     argv = parser.parse_args()
 
@@ -287,6 +288,7 @@ if __name__ == '__main__':
     MCEPs_dim = argv.MCEPs_dim
     lambda_cycle = argv.lambda_cycle
     lambda_identity = argv.lambda_identity
+    processed_data_dir = argv.processed_data_dir
 
     train(train_A_dir=train_A_dir, train_B_dir=train_B_dir, model_dir=model_dir, model_name=model_name,
           random_seed=random_seed, validation_A_dir=validation_A_dir, validation_B_dir=validation_B_dir,
