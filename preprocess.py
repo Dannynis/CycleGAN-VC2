@@ -208,9 +208,12 @@ def logf0_statistics(f0s):
 
 def pitch_conversion(f0, mean_log_src, std_log_src, mean_log_target, std_log_target):
     # Logarithm Gaussian normalization for Pitch Conversions
-    f0_converted = np.exp((np.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
+    # f0_converted = np.exp((np.log(f0) - mean_log_src) / std_log_src * std_log_target + mean_log_target)
+    lf0 = np.where(f0 > 1., np.log(f0), f0)
+    lf0 = np.where(lf0 > 1., (lf0 - mean_log_src) / std_log_src * std_log_target + mean_log_target, lf0)
+    lf0 = np.where(lf0 > 1., np.exp(lf0), lf0)
 
-    return f0_converted
+    return lf0
 
 
 def wavs_to_specs(wavs, n_fft=1024, hop_length=None):
