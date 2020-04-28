@@ -42,7 +42,7 @@ def load_wavs(wav_dir, sr):
 def world_decompose(wav, fs, frame_period=5.0):
     # Decompose speech signal into f0, spectral envelope and aperiodicity using WORLD
     wav = wav.astype(np.float64)
-    f0, timeaxis = pyworld.harvest(wav, fs, frame_period=frame_period, f0_floor=71.0, f0_ceil=800.0)
+    f0, timeaxis = pyworld.harvest(wav, fs, frame_period=frame_period, f0_floor=50.0, f0_ceil=500.0)
     sp = pyworld.cheaptrick(wav, f0, timeaxis, fs)
     ap = pyworld.d4c(wav, f0, timeaxis, fs)
 
