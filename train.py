@@ -69,19 +69,25 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
         f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = load_speaker_features(Speaker_B_features)
     else:
         print('Preprocessing Data...')
-
-        wavs_A = load_wavs(wav_dir=train_A_dir, sr=sampling_rate)
-        wavs_B = load_wavs(wav_dir=train_B_dir, sr=sampling_rate)
-
-        f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = world_encode_data(wavs=wavs_A, fs=sampling_rate,
-                                                                         frame_period=frame_period, coded_dim=num_mcep)
-        f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = world_encode_data(wavs=wavs_B, fs=sampling_rate,
-                                                                         frame_period=frame_period, coded_dim=num_mcep)
         if not os.path.exists(processed_data_dir):
             os.makedirs(processed_data_dir)
 
+
+        wavs_A = load_wavs(wav_dir=train_A_dir, sr=sampling_rate)
+
+        f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = world_encode_data(wavs=wavs_A, fs=sampling_rate,
+                                                                         frame_period=frame_period, coded_dim=num_mcep)
         np.savez(Speaker_A_features, f0s=f0s_A, timeaxes=timeaxes_A, sps=sps_A, aps=aps_A, coded_sps=coded_sps_A)
+
+        del wavs_A
+
+        wavs_B = load_wavs(wav_dir=train_B_dir, sr=sampling_rate)
+
+        f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = world_encode_data(wavs=wavs_B, fs=sampling_rate,
+                                                                         frame_period=frame_period, coded_dim=num_mcep)
         np.savez(Speaker_B_features, f0s=f0s_B, timeaxes=timeaxes_B, sps=sps_B, aps=aps_B, coded_sps=coded_sps_B)
+
+        del wavs_B
 
         print('Data preprocessing finished !')
         return
