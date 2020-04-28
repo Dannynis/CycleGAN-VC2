@@ -177,17 +177,18 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 #            model.summary()
 
             # Minimum AtoB loss model save
-            if gen_loss_thres > generator_loss_A2B:
-                gen_loss_thres = generator_loss_A2B
-                best_model_name = 'Bestmodel' + model_name
-                model.save(directory=model_dir, filename=best_model_name)
-                print("generator loss / generator A2B loss ", generator_loss, generator_loss_A2B)
+            # if gen_loss_thres > generator_loss_A2B:
+            #     gen_loss_thres = generator_loss_A2B
+            #     best_model_name = 'Bestmodel' + model_name
+            #     model.save(directory=model_dir, filename=best_model_name)
+            #     print("generator loss / generator A2B loss ", generator_loss, generator_loss_A2B)
 
             if i % 50 == 0:
                 print('Iteration: {:07d}, Generator Learning Rate: {:.7f}, Discriminator Learning Rate: {:.7f}, Generator Loss : {:.3f}, Discriminator Loss : {:.3f}'.format(num_iterations, generator_learning_rate, discriminator_learning_rate, generator_loss, discriminator_loss))
 
         # Last model save
-        model.save(directory = model_dir, filename = model_name)
+        if epoch % 10 == 0:
+            model.save(directory = model_dir, filename = model_name)
 
         end_time_epoch = time.time()
         time_elapsed_epoch = end_time_epoch - start_time_epoch
