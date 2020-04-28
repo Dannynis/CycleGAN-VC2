@@ -28,7 +28,7 @@ def load_wavs(wav_dir, sr):
 
     wav_dir_path = wav_dir
 
-    pool = multiprocessing.Pool(4)
+    pool = multiprocessing.Pool(3)
 
     wav_files = [x for x in os.listdir(wav_dir) if x.endswith('.wav')]
 
@@ -92,9 +92,9 @@ def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
     FRAME_PERIOD = frame_period
     CODED_DIM = coded_dim
 
-    pool = multiprocessing.Pool(6)
+    pool = multiprocessing.Pool(4)
 
-    results = list(tqdm.tqdm(map(encode_wav, wavs), total=len(wavs)))
+    results = list(tqdm.tqdm(pool.imap_unordered(encode_wav, wavs), total=len(wavs)))
 
     pool.close()
 
