@@ -80,7 +80,7 @@ def encode_wav(wav):
     f0, timeaxis, sp, ap = world_decompose(wav=wav, fs=fs, frame_period=frame_period)
     coded_sp = world_encode_spectral_envelop(sp=sp, fs=fs, dim=coded_dim)
 
-    return (f0, timeaxis, sp, ap, coded_sp)
+    return (f0, None, None, None, coded_sp)
 
 
 def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
