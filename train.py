@@ -15,12 +15,14 @@ from data_save import world_encode_data_toLoad, world_encode_data_toSave
 def remove_radical_pitch_samples(f0s,mceps,log_f0s_mean,log_f0s_std):
     print ("running radical pitch clearing on {} mceps".format(len(mceps)))
     filtered_mceps = []
+    filtered_f0s = []
     filtered_out_count = 0
     total_count = 0
     for i,(f0,mcep) in enumerate(zip(f0s,mceps)):
         try:
-            mask = ((np.ma.log(f0) - log_f0s_mean) ** 2 < log_f0s_std * 2).data
+            mask = ((np.ma.log(f0) - log_f0s_mean) ** 2 < log_f0s_std * 0.5).data
             filtered_mceps.append(mcep[mask])
+            filtered_f0s.append(f0[mask])
             filtered_out_count += len(mcep)- np.sum(mask)
             total_count += len(mcep)
         except:
@@ -28,7 +30,7 @@ def remove_radical_pitch_samples(f0s,mceps,log_f0s_mean,log_f0s_std):
             print (traceback.format_exc())
             print (i)
     print ("filtered {} out of {}".format(filtered_out_count,total_count))
-    return filtered_mceps
+    return filtered_mceps, filtered_f0s
 
 def load_speaker_features(file_path):
 
@@ -100,8 +102,12 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     print('Log Pitch B')
     print('Mean: %f, Std: %f' %(log_f0s_mean_B, log_f0s_std_B))
 
-    coded_sps_A = remove_radical_pitch_samples(f0s_A, coded_sps_A, log_f0s_mean_A, log_f0s_std_A)
-    coded_sps_B = remove_radical_pitch_samples(f0s_B, coded_sps_B, log_f0s_mean_B, log_f0s_std_B)
+    coded_sps_A,f0s_A = remove_radical_pitch_samples(f0s_A, coded_sps_A, log_f0s_mean_A, log_f0s_std_A)
+    coded_sps_B,f0s_B = remove_radical_pitch_samples(f0s_B, coded_sps_B, log_f0s_mean_B, log_f0s_std_B)
+
+    print('recalculating mean and std of radical cleared f0s')
+    log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
+    log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
 
 
     coded_sps_A_transposed = transpose_in_list(lst = coded_sps_A)
