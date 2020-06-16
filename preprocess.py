@@ -3,6 +3,7 @@ import numpy as np
 import os
 import pyworld
 import multiprocessing
+import multiprocessing.dummy
 import tqdm
 import traceback
 from waveglow_vocoder import WaveGlowVocoder
@@ -79,9 +80,8 @@ def decode_wav(mel):
     return WV.mel2wav(mel)
 
 def encode_wav(wav):
-    wav = torch.from_numpy(wav).to(device='cuda', dtype=torch.float32)
-    mel = WV.wav2mel(wav)
-
+    wav = wav.to(device='cuda', dtype=torch.float32)
+    mel = WV.wav2mel(wav)[0].cpu().numpy().T
     return (None, None, None, None, mel)
 
 
@@ -94,7 +94,7 @@ def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
     FRAME_PERIOD = frame_period
     CODED_DIM = coded_dim
 
-    pool = multiprocessing.Pool(4)
+    pool = multiprocessing.dummy.Pool(4)
 
     results = list(tqdm.tqdm(pool.imap_unordered(encode_wav, wavs), total=len(wavs)))
 
