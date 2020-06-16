@@ -7,7 +7,7 @@ import tqdm
 import traceback
 from waveglow_vocoder import WaveGlowVocoder
 WV = WaveGlowVocoder()
-
+import torch
 
 wav_dir_path = ''
 sample_rate = 0
@@ -21,7 +21,7 @@ def laod_wav(wav_path):
     except:
         print(traceback.format_exc())
         # wav = wav.astype(np.float64)
-    return (wav)
+    return (torch.Tensor(wav))
 
 
 def load_wavs(wav_dir, sr):
