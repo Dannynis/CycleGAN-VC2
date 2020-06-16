@@ -35,12 +35,9 @@ def remove_radical_pitch_samples(f0s,mceps,log_f0s_mean,log_f0s_std):
 def load_speaker_features(file_path):
 
     mcep_params = np.load(file_path, allow_pickle=True)
-    f0s = mcep_params['f0s']
-    timeaxes = mcep_params['timeaxes']
-    sps = mcep_params['sps']
-    aps = mcep_params['aps']
+
     coded_sps = mcep_params['coded_sps']
-    return f0s,timeaxes,sps,aps,coded_sps
+    return coded_sps
 
 
 def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validation_A_dir, validation_B_dir, output_dir,
@@ -50,9 +47,9 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     np.random.seed(random_seed)
     num_epochs = 5000
     mini_batch_size = 1
-    generator_learning_rate = 0.0002
+    generator_learning_rate = 0.00002
     generator_learning_rate_decay = generator_learning_rate / 200000
-    discriminator_learning_rate = 0.0001
+    discriminator_learning_rate = 0.000005
     discriminator_learning_rate_decay = discriminator_learning_rate / 200000
     sampling_rate = 44000
     num_mcep = MCEPs_dim
@@ -67,8 +64,8 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     print ('lookiong for preprocessed data in:{}'.format(processed_data_dir))
     if os.path.exists(Speaker_A_features) and os.path.exists(Speaker_B_features):
         print ('#### loading processed data #######')
-        f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = load_speaker_features(Speaker_A_features)
-        f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = load_speaker_features(Speaker_B_features)
+        coded_sps_A = load_speaker_features(Speaker_A_features)
+        coded_sps_B = load_speaker_features(Speaker_B_features)
     else:
         print('Preprocessing Data...')
         if not os.path.exists(processed_data_dir):
@@ -79,7 +76,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 
         f0s_A, timeaxes_A, sps_A, aps_A, coded_sps_A = world_encode_data(wavs=wavs_A, fs=sampling_rate,
                                                                          frame_period=frame_period, coded_dim=num_mcep)
-        np.savez(Speaker_A_features, f0s=f0s_A, timeaxes=timeaxes_A, sps=sps_A, aps=aps_A, coded_sps=coded_sps_A)
+        np.savez(Speaker_A_features, coded_sps=coded_sps_A)
 
         del wavs_A
 
@@ -87,12 +84,11 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 
         f0s_B, timeaxes_B, sps_B, aps_B, coded_sps_B = world_encode_data(wavs=wavs_B, fs=sampling_rate,
                                                                          frame_period=frame_period, coded_dim=num_mcep)
-        np.savez(Speaker_B_features, f0s=f0s_B, timeaxes=timeaxes_B, sps=sps_B, aps=aps_B, coded_sps=coded_sps_B)
+        np.savez(Speaker_B_features,coded_sps=coded_sps_B)
 
         del wavs_B
 
         print('Data preprocessing finished !')
-        return
 
     # log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
     # log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
@@ -124,8 +120,8 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 
     if not os.path.exists(model_dir):
         os.makedirs(model_dir)
-    np.savez(os.path.join(model_dir, 'logf0s_normalization.npz'), mean_A=log_f0s_mean_A, std_A=log_f0s_std_A,
-             mean_B=log_f0s_mean_B, std_B=log_f0s_std_B)
+    # np.savez(os.path.join(model_dir, 'logf0s_normalization.npz'), mean_A=log_f0s_mean_A, std_A=log_f0s_std_A,
+    #          mean_B=log_f0s_mean_B, std_B=log_f0s_std_B)
     np.savez(os.path.join(model_dir, 'mcep_normalization.npz'), mean_A=coded_sps_A_mean, std_A=coded_sps_A_std,
              mean_B=coded_sps_B_mean, std_B=coded_sps_B_std)
 
@@ -216,11 +212,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
                     coded_sp_transposed = coded_sp.T
                     coded_sp_norm = (coded_sp_transposed - coded_sps_A_mean) / coded_sps_A_std
                     coded_sp_converted_norm = model.test(inputs = np.array([coded_sp_norm]), direction = 'A2B')[0]
-                    coded_sp_converted = coded_sp_converted_norm * coded_sps_B_std + coded_sps_B_mean
-                    coded_sp_converted = coded_sp_converted.T
-                    coded_sp_converted = np.ascontiguousarray(coded_sp_converted)
-                    decoded_sp_converted = world_decode_spectral_envelop(coded_sp = coded_sp_converted, fs = sampling_rate)
-                    wav_transformed = world_speech_synthesis(f0 = f0_converted, decoded_sp = decoded_sp_converted, ap = ap, fs = sampling_rate, frame_period = frame_period)
+                    wav_transformed = WV.mel2wav(coded_sp_converted_norm)
                     librosa.output.write_wav(os.path.join(validation_A_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
                     # break
 
@@ -238,11 +230,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
                     coded_sp_transposed = coded_sp.T
                     coded_sp_norm = (coded_sp_transposed - coded_sps_B_mean) / coded_sps_B_std
                     coded_sp_converted_norm = model.test(inputs = np.array([coded_sp_norm]), direction = 'B2A')[0]
-                    coded_sp_converted = coded_sp_converted_norm * coded_sps_A_std + coded_sps_A_mean
-                    coded_sp_converted = coded_sp_converted.T
-                    coded_sp_converted = np.ascontiguousarray(coded_sp_converted)
-                    decoded_sp_converted = world_decode_spectral_envelop(coded_sp = coded_sp_converted, fs = sampling_rate)
-                    wav_transformed = world_speech_synthesis(f0 = f0_converted, decoded_sp = decoded_sp_converted, ap = ap, fs = sampling_rate, frame_period = frame_period)
+                    wav_transformed = WV.mel2wav(coded_sp_converted_norm)
                     librosa.output.write_wav(os.path.join(validation_B_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
                     # break
         # ------------------------------------------- validation inference ------------------------------------------- #

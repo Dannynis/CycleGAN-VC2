@@ -5,6 +5,9 @@ import pyworld
 import multiprocessing
 import tqdm
 import traceback
+from waveglow_vocoder import WaveGlowVocoder
+WV = WaveGlowVocoder()
+
 
 wav_dir_path = ''
 sample_rate = 0
@@ -73,15 +76,10 @@ CODED_DIM = 0
 
 
 def encode_wav(wav):
-    fs = FS
-    frame_period = FRAME_PERIOD
-    coded_dim = CODED_DIM
-    #
-    # f0, timeaxis, sp, ap = world_decompose(wav=wav, fs=fs, frame_period=frame_period)
-    # coded_sp = world_encode_spectral_envelop(sp=sp, fs=fs, dim=coded_dim)
-    S = librosa.feature.melspectrogram(y=wav, sr=fs, n_mels=coded_dim)
 
-    return (None, None, None, None, S)
+    mel = WV.wav2mel(wav)
+
+    return (None, None, None, None, mel)
 
 
 def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
