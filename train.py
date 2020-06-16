@@ -51,7 +51,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
     generator_learning_rate_decay = generator_learning_rate / 200000
     discriminator_learning_rate = 0.000005
     discriminator_learning_rate_decay = discriminator_learning_rate / 200000
-    sampling_rate = 44000
+    sampling_rate = 22050
     num_mcep = MCEPs_dim
     frame_period = 5.0
     n_frames = 128
