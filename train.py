@@ -94,20 +94,20 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
         print('Data preprocessing finished !')
         return
 
-    log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
-    log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
-
-    print('Log Pitch A')
-    print('Mean: %f, Std: %f' %(log_f0s_mean_A, log_f0s_std_A))
-    print('Log Pitch B')
-    print('Mean: %f, Std: %f' %(log_f0s_mean_B, log_f0s_std_B))
-
-    coded_sps_A,f0s_A = remove_radical_pitch_samples(f0s_A, coded_sps_A, log_f0s_mean_A, log_f0s_std_A)
-    coded_sps_B,f0s_B = remove_radical_pitch_samples(f0s_B, coded_sps_B, log_f0s_mean_B, log_f0s_std_B)
-
-    print('recalculating mean and std of radical cleared f0s')
-    log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
-    log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
+    # log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
+    # log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
+    #
+    # print('Log Pitch A')
+    # print('Mean: %f, Std: %f' %(log_f0s_mean_A, log_f0s_std_A))
+    # print('Log Pitch B')
+    # print('Mean: %f, Std: %f' %(log_f0s_mean_B, log_f0s_std_B))
+    #
+    # coded_sps_A,f0s_A = remove_radical_pitch_samples(f0s_A, coded_sps_A, log_f0s_mean_A, log_f0s_std_A)
+    # coded_sps_B,f0s_B = remove_radical_pitch_samples(f0s_B, coded_sps_B, log_f0s_mean_B, log_f0s_std_B)
+    #
+    # print('recalculating mean and std of radical cleared f0s')
+    # log_f0s_mean_A, log_f0s_std_A = logf0_statistics(f0s_A)
+    # log_f0s_mean_B, log_f0s_std_B = logf0_statistics(f0s_B)
 
 
     coded_sps_A_transposed = transpose_in_list(lst = coded_sps_A)
