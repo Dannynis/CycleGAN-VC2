@@ -74,9 +74,12 @@ FS = 0
 FRAME_PERIOD = 0
 CODED_DIM = 0
 
+def decode_wav(mel):
+    mel =torch.from_numpy(mel).to(device='cuda', dtype=torch.float32)
+    return WV.mel2wav(mel)
 
 def encode_wav(wav):
-
+    wav = torch.from_numpy(wav).to(device='cuda', dtype=torch.float32)
     mel = WV.wav2mel(wav)
 
     return (None, None, None, None, mel)
