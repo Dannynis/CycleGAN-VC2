@@ -251,7 +251,7 @@ if __name__ == '__main__':
     output_dir_default = './validation_output'
     tensorboard_log_dir_default = './log'
     generator_model_default = 'CycleGAN-VC2'
-    MCEPs_dim_default = 32
+    MCEPs_dim_default = 80
     lambda_cycle_defalut = 10.0
     lambda_identity_defalut = 5.0
     processed_data_dir = './processed_data'
