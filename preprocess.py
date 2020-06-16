@@ -76,11 +76,12 @@ def encode_wav(wav):
     fs = FS
     frame_period = FRAME_PERIOD
     coded_dim = CODED_DIM
+    #
+    # f0, timeaxis, sp, ap = world_decompose(wav=wav, fs=fs, frame_period=frame_period)
+    # coded_sp = world_encode_spectral_envelop(sp=sp, fs=fs, dim=coded_dim)
+    S = librosa.feature.melspectrogram(y=wav, sr=fs, n_mels=coded_dim)
 
-    f0, timeaxis, sp, ap = world_decompose(wav=wav, fs=fs, frame_period=frame_period)
-    coded_sp = world_encode_spectral_envelop(sp=sp, fs=fs, dim=coded_dim)
-
-    return (f0, None, None, None, coded_sp)
+    return (None, None, None, None, S)
 
 
 def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
