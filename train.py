@@ -206,7 +206,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
                     filepath = os.path.join(validation_A_dir, file)
                     wav, _ = librosa.load(filepath, sr = sampling_rate, mono = True)
                     wav = wav_padding(wav = wav, sr = sampling_rate, frame_period = frame_period, multiple = 4)
-                    mel = encode_wav(wav=wav)
+                    mel = encode_wav(torch.Tensor(wav=wav))
                     coded_sp_converted_norm = model.test(inputs = np.array([mel]), direction = 'A2B')[0]
                     wav_transformed = WV.mel2wav(coded_sp_converted_norm)
                     librosa.output.write_wav(os.path.join(validation_A_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
@@ -220,7 +220,7 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
                     filepath = os.path.join(validation_B_dir, file)
                     wav, _ = librosa.load(filepath, sr=sampling_rate, mono=True)
                     wav = wav_padding(wav=wav, sr=sampling_rate, frame_period=frame_period, multiple=4)
-                    mel = encode_wav(wav=wav)
+                    mel = encode_wav(torch.Tensor(wav=wav))
                     coded_sp_converted_norm = model.test(inputs=np.array([mel]), direction='A2B')[0]
                     wav_transformed = WV.mel2wav(coded_sp_converted_norm)
                     librosa.output.write_wav(os.path.join(validation_B_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
