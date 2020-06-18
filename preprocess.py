@@ -77,7 +77,7 @@ CODED_DIM = 0
 
 def decode_wav(mel):
     mel =torch.from_numpy(mel).to(device='cuda', dtype=torch.float32)
-    return WV.mel2wav(mel)
+    return WV.mel2wav(mel)[0].cpu().numpy()
 
 def encode_wav(wav):
     wav = wav.to(device='cuda', dtype=torch.float32)
