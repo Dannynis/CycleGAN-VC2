@@ -7,6 +7,7 @@ import multiprocessing.dummy
 import tqdm
 import traceback
 from waveglow_vocoder import WaveGlowVocoder
+
 WV = WaveGlowVocoder()
 import torch
 
@@ -36,7 +37,7 @@ def load_wavs(wav_dir, sr):
 
     wav_files = [x for x in os.listdir(wav_dir) if x.endswith('.wav')]
 
-    wavs = list(tqdm.tqdm(pool.imap_unordered(laod_wav, wav_files),total=len(wav_files)))
+    wavs = list(tqdm.tqdm(pool.imap_unordered(laod_wav, wav_files), total=len(wav_files)))
 
     pool.close()
 
@@ -75,14 +76,18 @@ FS = 0
 FRAME_PERIOD = 0
 CODED_DIM = 0
 
+
 def decode_wav(mel):
-    mel =torch.from_numpy(mel).to(device='cuda', dtype=torch.float32)
+    mel = torch.Tensor(mel)
+    mel = mel.to(device='cuda', dtype=torch.float32)
     return WV.mel2wav(mel)[0].cpu().numpy()
 
+
 def encode_wav(wav):
+    wav = torch.Tensor(wav)
     wav = wav.to(device='cuda', dtype=torch.float32)
     mel = WV.wav2mel(wav)[0].cpu().numpy().T
-    return (None, None, None, None, mel)
+    return mel
 
 
 def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
@@ -100,14 +105,7 @@ def world_encode_data(wavs, fs, frame_period=5.0, coded_dim=24):
 
     pool.close()
 
-    for result in results:
-        f0s.append(result[0])
-        timeaxes.append(result[1])
-        sps.append(result[2])
-        aps.append(result[3])
-        coded_sps.append(result[4])
-
-    return f0s, timeaxes, sps, aps, coded_sps
+    return results
 
 
 def transpose_in_list(lst):
@@ -191,7 +189,7 @@ def wav_padding(wav, sr, frame_period, multiple=4):
     num_frames = len(wav)
     num_frames_padded = int(
         (np.ceil((np.floor(num_frames / (sr * frame_period / 1000)) + 1) / multiple + 1) * multiple - 1) * (
-                    sr * frame_period / 1000))
+                sr * frame_period / 1000))
     num_frames_diff = num_frames_padded - num_frames
     num_pad_left = num_frames_diff // 2
     num_pad_right = num_frames_diff - num_pad_left
