@@ -10,7 +10,7 @@ import tqdm
 from preprocess import *
 from model import CycleGAN
 from data_save import world_encode_data_toLoad, world_encode_data_toSave
-
+import pickle
 
 def remove_radical_pitch_samples(f0s,mceps,log_f0s_mean,log_f0s_std):
     print ("running radical pitch clearing on {} mceps".format(len(mceps)))
@@ -173,7 +173,6 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
 
             start = i * mini_batch_size
             end = (i + 1) * mini_batch_size
-
             generator_loss, discriminator_loss, generator_loss_A2B = model.train\
                 (input_A = dataset_A[start:end], input_B = dataset_B[start:end],
                  lambda_cycle = lambda_cycle, lambda_identity = lambda_identity,
@@ -211,8 +210,14 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
                     wav = wav_padding(wav = wav, sr = sampling_rate, frame_period = frame_period, multiple = 4)
                     mel = encode_wav(wav=wav)
                     coded_sp_converted_norm = model.test(inputs = np.array([mel.T]), direction = 'A2B')
+                    with open(os.path.join(validation_A_output_dir, os.path.basename(file)+'.pkl')) as f:
+                      pickle.dump(coded_sp_converted_norm,f)
+                    #os.path.join(validation_A_output_dir, os.path.basename(file)
                     wav_transformed = decode_wav(coded_sp_converted_norm)
                     librosa.output.write_wav(os.path.join(validation_A_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
+                    cycle_B = model.test(inputs = np.array([coded_sp_converted_norm]), direction = 'B2A')
+                    wav_transformed_cyc = decode_wav(coded_sp_converted_norm)
+                    librosa.output.write_wav(os.path.join(validation_A_output_dir, 'cyc_'+os.path.basename(file)), wav_transformed, sampling_rate)
                     # break
 
         if validation_B_dir is not None:
@@ -224,9 +229,15 @@ def train(train_A_dir, train_B_dir, model_dir, model_name, random_seed, validati
                     wav, _ = librosa.load(filepath, sr=sampling_rate, mono=True)
                     wav = wav_padding(wav=wav, sr=sampling_rate, frame_period=frame_period, multiple=4)
                     mel = encode_wav(wav=wav)
-                    coded_sp_converted_norm = model.test(inputs=np.array([mel.T]), direction='A2B')
+                    coded_sp_converted_norm = model.test(inputs=np.array([mel.T]), direction='B2A')
+                    with open(os.path.join(validation_A_output_dir, os.path.basename(file)+'.pkl')) as f:
+                      pickle.dump(coded_sp_converted_norm,f)
+                    #os.path.join(validation_A_output_dir, os.path.basename(file)
                     wav_transformed = decode_wav(coded_sp_converted_norm)
-                    librosa.output.write_wav(os.path.join(validation_B_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
+                    librosa.output.write_wav(os.path.join(validation_A_output_dir, os.path.basename(file)), wav_transformed, sampling_rate)
+                    cycle_B = model.test(inputs = np.array([coded_sp_converted_norm]), direction = 'A2B')
+                    wav_transformed_cyc = decode_wav(coded_sp_converted_norm)
+                    librosa.output.write_wav(os.path.join(validation_A_output_dir, 'cyc_'+os.path.basename(file)), wav_transformed, sampling_rate)
                     # break
         # ------------------------------------------- validation inference ------------------------------------------- #
     # =================================================== Training =================================================== #
